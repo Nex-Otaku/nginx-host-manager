@@ -1,0 +1,31 @@
+{
+  "name": "nginx-host-manager",
+  "version": "1.0.0",
+  "description": "Tool to manage Nginx hosts",
+  "main": "host-manager/host-manager-cli.js",
+  "scripts": {
+    "cli": "node host-manager/host-manager-cli.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nodejs",
+    "nginx",
+    "docker",
+    "localhost",
+    "reverse-proxy",
+    "tool"
+  ],
+  "author": "Nex Otaku",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "child-process-promise": "^2.2.1",
+    "clear": "^0.1.0",
+    "clui": "^0.3.6",
+    "figlet": "^1.5.0",
+    "inquirer": "^7.3.3",
+    "lodash": "^4.17.20",
+    "minimist": "^1.2.5",
+    "press-any-key": "^0.1.1"
+  }
+}
