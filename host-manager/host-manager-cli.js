@@ -21,6 +21,8 @@ const printHeader = () => {
     );
 
     lib.newline();
+    manager.showStatus();
+    lib.newline();
 };
 
 const selectAction = async (actions) => {
@@ -45,7 +47,6 @@ const mainLoop = async () => {
         printHeader();
 
         const selectedAction = await selectAction([
-            'Show status',
             'Create host',
             'Delete host',
             'Change port',
@@ -58,10 +59,6 @@ const mainLoop = async () => {
             'Delete all hosts',
             'Exit',
         ]);
-
-        if (selectedAction === 'Show status') {
-            await manager.showStatus();
-        }
 
         if (selectedAction === 'Create host') {
             await manager.createHost();

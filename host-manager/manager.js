@@ -1,6 +1,39 @@
+const files = require('./files');
+const chalk = require('chalk');
+const lib = require('./lib');
+
+const printSites = (label, sites) => {
+    console.log(chalk.yellow(label));
+
+    if (sites.length === 0) {
+        console.log('- No sites -');
+        return;
+    }
+
+    for (site of sites) {
+        const active = !site.endsWith('.disabled');
+
+        const domain = active
+            ? site.replace('.conf', '')
+            : site.replace('.conf.disabled', '');
+
+        console.log(active
+            ? chalk.greenBright(domain)
+            : chalk.gray(domain)
+        );
+    }
+}
+
 const showStatus = async () => {
-    // TODO
-    console.log('showStatus');
+    const sitesPath = files.getCurrentDirectory() + '\\reverse-proxy\\sites';
+
+    const enabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf$');
+    printSites('Enabled sites:', enabledSites);
+
+    lib.newline();
+
+    const disabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf\.disabled$');
+    printSites('Disabled sites:', disabledSites);
 };
 
 const createHost = async () => {
