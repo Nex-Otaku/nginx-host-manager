@@ -11,7 +11,7 @@ const printSites = (label, sites) => {
         return;
     }
 
-    for (site of sites) {
+    for (const site of sites) {
         const active = !site.endsWith('.disabled');
 
         const domain = active
@@ -47,13 +47,13 @@ const getHosts = () => {
 
     const enabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf$');
 
-    for (site of enabledSites) {
+    for (const site of enabledSites) {
         hosts.push(site.replace('.conf', ''));
     }
 
     const disabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf\.disabled$');
 
-    for (site of disabledSites) {
+    for (const site of disabledSites) {
         hosts.push(site.replace('.conf.disabled', ''));
     }
 
@@ -154,12 +154,28 @@ const deleteHost = async () => {
     }
 
     files.deleteFile(configFile);
-    console.log('Configuration was deleted');
+    console.log('Configuration for host "' + host + '" was deleted');
 };
 
 const deleteAllHosts = async () => {
-    // TODO
-    console.log('deleteAllHosts');
+    const hosts = getHosts();
+
+    if (hosts.length === 0) {
+        console.log('No deletion');
+        return;
+    }
+
+    for (const host of hosts) {
+        const configFile = getConfigFile(host);
+
+        if (configFile === null) {
+            continue;
+        }
+
+        files.deleteFile(configFile);
+    }
+
+    console.log('Configuration for all hosts was deleted');
 };
 
 const changePort = async () => {
