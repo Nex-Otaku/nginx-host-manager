@@ -37,4 +37,4 @@ bash:
 	docker exec -ti reverse-proxy bash
 
 test:
-	curl -I http://hello.localhost
+	curl --connect-timeout 1 -I http://hello.localhost

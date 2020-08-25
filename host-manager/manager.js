@@ -2,6 +2,7 @@ const files = require('./files');
 const chalk = require('chalk');
 const lib = require('./lib');
 const inquirer = require('inquirer');
+const docker = require('./docker');
 
 const printSites = (label, sites) => {
     console.log(chalk.yellow(label));
@@ -23,15 +24,70 @@ const printSites = (label, sites) => {
             : chalk.gray(domain)
         );
     }
-}
+};
 
 const getSitesPath = () => {
     return files.getCurrentDirectory() + '\\reverse-proxy\\sites';
-}
+};
+
+const isProxyOnline = async () => {
+    const containerName = 'reverse-proxy';
+    const infos = await docker.inspect(containerName);
+
+    if (infos.length < 1) {
+        return false;
+    }
+
+    let foundInfo = null;
+
+    for (const info of infos) {
+        if (info.Name === '/' + containerName) {
+            foundInfo = info;
+            break;
+        }
+    }
+
+    if (foundInfo === null) {
+        return false;
+    }
+
+    if (!foundInfo.State.Running) {
+        return false;
+    }
+
+    const bindings = foundInfo.HostConfig.PortBindings;
+    const port80 = '80/tcp';
+
+    if (!(port80 in bindings)) {
+        return false;
+    }
+
+    const binding = bindings[port80];
+
+    if (!Array.isArray(binding)) {
+        return false;
+    }
+
+    if (binding.length !== 1) {
+        return false;
+    }
+
+    const first = binding[0];
+
+    return (first.HostIp === '') && (first.HostPort === '80');
+};
 
 const showStatus = async () => {
-    const sitesPath = getSitesPath();
+    const proxyOnline = await isProxyOnline();
+    console.log('Reverse Proxy: ' + (
+        proxyOnline
+            ? chalk.greenBright('Online')
+            : chalk.red('Offline')
+    ));
 
+    lib.newline();
+
+    const sitesPath = getSitesPath();
     const enabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf$');
     printSites('Enabled sites:', enabledSites);
 

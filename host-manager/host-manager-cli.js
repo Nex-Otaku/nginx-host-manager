@@ -13,7 +13,7 @@ const lib = require('./lib');
 
 const manager = require('./manager');
 
-const printHeader = () => {
+const printHeader = async () => {
     console.log(
         chalk.yellow(
             figlet.textSync('Nginx Host Manager', { horizontalLayout: 'full' })
@@ -21,7 +21,7 @@ const printHeader = () => {
     );
 
     lib.newline();
-    manager.showStatus();
+    await manager.showStatus();
     lib.newline();
 };
 
@@ -44,7 +44,7 @@ const mainLoop = async () => {
     let running = true;
     while (running) {
         clear();
-        printHeader();
+        await printHeader();
 
         const selectedAction = await selectAction([
             'Create host',
