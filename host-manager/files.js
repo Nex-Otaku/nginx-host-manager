@@ -27,6 +27,10 @@ const getTempFilePath = (fileName) => {
     return path.join(getTempDirectoryPath(), fileName);
 };
 
+const fileExists = (filePath) => {
+    return fs.existsSync(filePath);
+};
+
 const directoryExists = (filePath) => {
     return fs.existsSync(filePath);
 };
@@ -62,6 +66,8 @@ module.exports = {
     getFilesWithPattern: getFilesWithPattern,
 
     getCurrentDirectory: getCurrentDirectory,
+
+    fileExists: fileExists,
 
     directoryExists: directoryExists,
 

@@ -41,6 +41,46 @@ const showStatus = async () => {
     printSites('Disabled sites:', disabledSites);
 };
 
+const getHosts = () => {
+    let hosts = [];
+    const sitesPath = getSitesPath();
+
+    const enabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf$');
+
+    for (site of enabledSites) {
+        hosts.push(site.replace('.conf', ''));
+    }
+
+    const disabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf\.disabled$');
+
+    for (site of disabledSites) {
+        hosts.push(site.replace('.conf.disabled', ''));
+    }
+
+    return hosts;
+};
+
+const selectHost = async (prompt, hosts) => {
+    const hostsCopy = [].concat(hosts);
+    hostsCopy.push(' -- cancel');
+
+    const result = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'host',
+            message: prompt,
+            choices: hostsCopy,
+            pageSize: 30,
+        }
+    ]);
+
+    if (result.host === ' -- cancel') {
+        return '';
+    }
+
+    return result.host;
+};
+
 const createHost = async () => {
     const host = (await inquirer.prompt({
         name: 'host',
@@ -75,13 +115,46 @@ const createHost = async () => {
     config = config.replace(/%HOST%/g, host);
     config = config.replace(/%PORT%/g, port);
 
-    const confFile = host + '.conf';
-    files.writeFile(getSitesPath() + '\\' + confFile, config);
+    files.writeFile(getEnabledConfigFile(host), config);
+};
+
+const getEnabledConfigFile = (host) => {
+    return getSitesPath() + '\\' + host + '.conf';
+};
+
+const getDisabledConfigFile = (host) => {
+    return getSitesPath() + '\\' + host + '.conf.disabled';
+};
+
+const getConfigFile = (host) => {
+    if (files.fileExists(getEnabledConfigFile(host))) {
+        return getEnabledConfigFile(host);
+    }
+
+    if (files.fileExists(getDisabledConfigFile(host))) {
+        return getDisabledConfigFile(host);
+    }
+
+    return null;
 };
 
 const deleteHost = async () => {
-    // TODO
-    console.log('deleteHost');
+    const hosts = getHosts();
+    const host = await selectHost('Host to delete', hosts);
+
+    if (host === '') {
+        console.log('No deletion');
+        return;
+    }
+
+    const configFile = getConfigFile(host);
+
+    if (configFile === null) {
+        return;
+    }
+
+    files.deleteFile(configFile);
+    console.log('Configuration was deleted');
 };
 
 const deleteAllHosts = async () => {
