@@ -47,6 +47,13 @@ const deleteFile = (filePath) => {
     return fs.unlinkSync(filePath);
 };
 
+const readFile = (filePath) => {
+    return fs.readFileSync(filePath, 'utf8');
+};
+
+const writeFile = (filePath, content) => {
+    fs.writeFileSync(filePath, content);
+};
 
 module.exports = {
 
@@ -62,5 +69,9 @@ module.exports = {
 
     getTempFilePath: getTempFilePath,
 
-    deleteFile: deleteFile
+    deleteFile: deleteFile,
+
+    readFile: readFile,
+
+    writeFile: writeFile
 };

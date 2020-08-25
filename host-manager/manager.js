@@ -1,6 +1,7 @@
 const files = require('./files');
 const chalk = require('chalk');
 const lib = require('./lib');
+const inquirer = require('inquirer');
 
 const printSites = (label, sites) => {
     console.log(chalk.yellow(label));
@@ -24,8 +25,12 @@ const printSites = (label, sites) => {
     }
 }
 
+const getSitesPath = () => {
+    return files.getCurrentDirectory() + '\\reverse-proxy\\sites';
+}
+
 const showStatus = async () => {
-    const sitesPath = files.getCurrentDirectory() + '\\reverse-proxy\\sites';
+    const sitesPath = getSitesPath();
 
     const enabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf$');
     printSites('Enabled sites:', enabledSites);
@@ -37,8 +42,41 @@ const showStatus = async () => {
 };
 
 const createHost = async () => {
-    // TODO
-    console.log('createHost');
+    const host = (await inquirer.prompt({
+        name: 'host',
+        type: 'input',
+        message: 'Host:',
+        default: 'localhost',
+        validate: function( value ) {
+            if (value.length) {
+                return true;
+            } else {
+                return 'Please enter host name';
+            }
+        }
+    })).host;
+
+    const port = (await inquirer.prompt({
+        name: 'port',
+        type: 'input',
+        default: '9000',
+        message: 'Port:',
+        validate: function( value ) {
+            if (value.length) {
+                return true;
+            } else {
+                return 'Please enter port number';
+            }
+        }
+    })).port;
+
+    let config = files.readFile(files.getCurrentDirectory() + '\\reverse-proxy\\host-template.conf');
+
+    config = config.replace(/%HOST%/g, host);
+    config = config.replace(/%PORT%/g, port);
+
+    const confFile = host + '.conf';
+    files.writeFile(getSitesPath() + '\\' + confFile, config);
 };
 
 const deleteHost = async () => {
