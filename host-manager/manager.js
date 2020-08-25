@@ -157,10 +157,28 @@ const deleteHost = async () => {
     console.log('Configuration for host "' + host + '" was deleted');
 };
 
+const isConfirmed = async (prompt) => {
+    const result = await inquirer.prompt({
+            type: 'confirm',
+            name: 'confirmed',
+            message: prompt,
+            default: false,
+        });
+
+    return result.confirmed;
+};
+
 const deleteAllHosts = async () => {
     const hosts = getHosts();
 
     if (hosts.length === 0) {
+        console.log('No deletion');
+        return;
+    }
+
+    const confirmed = await isConfirmed('Delete all hosts?');
+
+    if (!confirmed) {
         console.log('No deletion');
         return;
     }
