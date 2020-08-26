@@ -59,6 +59,10 @@ const writeFile = (filePath, content) => {
     fs.writeFileSync(filePath, content);
 };
 
+const renameFile = (from, to) => {
+    fs.renameSync(from, to);
+};
+
 module.exports = {
 
     getFilesWithRegex: getFilesWithRegex,
@@ -79,5 +83,7 @@ module.exports = {
 
     readFile: readFile,
 
-    writeFile: writeFile
+    writeFile: writeFile,
+
+    renameFile: renameFile
 };

@@ -12,6 +12,7 @@ const printSites = (label, sites) => {
 
     if (sites.length === 0) {
         console.log('- No sites -');
+
         return;
     }
 
@@ -49,6 +50,7 @@ const getProxyContainerInfo = async () => {
     for (const info of infos) {
         if (info.Name === '/' + proxyContainerName) {
             foundInfo = info;
+
             break;
         }
     }
@@ -169,6 +171,12 @@ const stopProxyContainer = async () => {
 }
 
 const getHosts = () => {
+    return []
+        .concat(getEnabledHosts())
+        .concat(getDisabledHosts());
+};
+
+const getEnabledHosts = () => {
     let hosts = [];
     const sitesPath = getSitesPath();
 
@@ -177,6 +185,13 @@ const getHosts = () => {
     for (const site of enabledSites) {
         hosts.push(site.replace('.conf', ''));
     }
+
+    return hosts;
+};
+
+const getDisabledHosts = () => {
+    let hosts = [];
+    const sitesPath = getSitesPath();
 
     const disabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf\.disabled$');
 
@@ -245,12 +260,29 @@ const execProxyContainer = async (command) => {
     return lib.shellRun(dockerCommand, ['signal process started']);
 };
 
+const renameFile = (from, to) => {
+    if (!files.fileExists(from)) {
+        console.log('Not found source file');
+
+        return;
+    }
+
+    if (files.fileExists(to)) {
+        console.log('Destination file already exists');
+
+        return;
+    }
+
+    files.renameFile(from, to);
+};
+
 // ****************************************************
 // Public Methods
 // ****************************************************
 
 const showStatus = async () => {
     const proxyOnline = await isProxyOnline();
+
     console.log('Reverse Proxy: ' + (
         proxyOnline
             ? chalk.greenBright('Online')
@@ -312,6 +344,7 @@ const deleteHost = async () => {
 
     if (host === '') {
         console.log('No deletion');
+
         return;
     }
 
@@ -337,6 +370,7 @@ const deleteAllHosts = async () => {
 
     if (!confirmed) {
         console.log('No deletion');
+
         return;
     }
 
@@ -359,13 +393,29 @@ const changePort = async () => {
 };
 
 const disableHost = async () => {
-    // TODO
-    console.log('disableHost');
+    const hosts = getEnabledHosts();
+    const host = await selectHost('Host to disable', hosts);
+
+    if (host === '') {
+        console.log('No host selected');
+
+        return;
+    }
+
+    renameFile(getEnabledConfigFile(host), getDisabledConfigFile(host));
 };
 
 const enableHost = async () => {
-    // TODO
-    console.log('enableHost');
+    const hosts = getDisabledHosts();
+    const host = await selectHost('Host to enable', hosts);
+
+    if (host === '') {
+        console.log('No host selected');
+
+        return;
+    }
+
+    renameFile(getDisabledConfigFile(host), getEnabledConfigFile(host));
 };
 
 const startProxy = async () => {
