@@ -1,3 +1,5 @@
+const lib = require('./lib');
+
 // esm
 const { dockerCommand } = require('docker-cli-js');
 
@@ -8,12 +10,46 @@ const options = {
     echo: false, // echo command output to stdout/stderr
 };
 
-const inspect = async (name) => {
-    const response = await dockerCommand('inspect ' + name, options);
+const execute = async (command) => {
+    try {
+        const response = await dockerCommand(command, options);
 
-    return response.object;
+        return response.object;
+    } catch (err) {
+        // Do nothing
+    }
+
+    return null;
 };
 
+const inspectContainer = async (name) => {
+    const response = await execute('container inspect ' + name);
+
+    if (response === null) {
+        return [];
+    }
+
+    return response;
+};
+
+const inspectImage = async (name) => {
+    const response = await execute('image inspect ' + name);
+
+    if (response === null) {
+        return [];
+    }
+
+    return response;
+};
+
+const buildImage = async (name, path) => {
+    const command = 'cd ' + path + ' && docker build -t ' + name + ' .';
+
+    return lib.shellRun(command);
+}
+
 module.exports = {
-    inspect: inspect,
+    inspectContainer: inspectContainer,
+    inspectImage: inspectImage,
+    buildImage: buildImage
 };

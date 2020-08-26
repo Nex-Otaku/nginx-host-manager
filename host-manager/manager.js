@@ -4,6 +4,9 @@ const lib = require('./lib');
 const inquirer = require('inquirer');
 const docker = require('./docker');
 
+const proxyImageName = 'reverse-proxy-image';
+const proxyContainerName = 'reverse-proxy';
+
 const printSites = (label, sites) => {
     console.log(chalk.yellow(label));
 
@@ -26,26 +29,65 @@ const printSites = (label, sites) => {
     }
 };
 
+const getProxyFolderPath = () => {
+    return files.getCurrentDirectory() + '\\reverse-proxy';
+}
+
 const getSitesPath = () => {
-    return files.getCurrentDirectory() + '\\reverse-proxy\\sites';
+    return getProxyFolderPath() + '\\sites';
 };
 
-const isProxyOnline = async () => {
-    const containerName = 'reverse-proxy';
-    const infos = await docker.inspect(containerName);
+const getProxyContainerInfo = async () => {
+    const infos = await docker.inspectContainer(proxyContainerName);
 
     if (infos.length < 1) {
-        return false;
+        return null;
     }
 
     let foundInfo = null;
 
     for (const info of infos) {
-        if (info.Name === '/' + containerName) {
+        if (info.Name === '/' + proxyContainerName) {
             foundInfo = info;
             break;
         }
     }
+
+    return foundInfo;
+};
+
+const getProxyImageInfo = async () => {
+    const infos = await docker.inspectImage(proxyImageName);
+
+    if (infos.length < 1) {
+        return null;
+    }
+
+    let foundInfo = null;
+
+    for (const info of infos) {
+        const repoTags = info.RepoTags;
+
+        if (!Array.isArray(repoTags) || (repoTags.length < 1)) {
+            continue;
+        }
+
+        const repoTag = repoTags[0];
+        const expectedRepoTag = proxyImageName + ':latest';
+
+        if (repoTag !== expectedRepoTag) {
+            continue;
+        }
+
+        foundInfo = info;
+        break;
+    }
+
+    return foundInfo;
+};
+
+const isProxyOnline = async () => {
+    const foundInfo = await getProxyContainerInfo();
 
     if (foundInfo === null) {
         return false;
@@ -77,25 +119,54 @@ const isProxyOnline = async () => {
     return (first.HostIp === '') && (first.HostPort === '80');
 };
 
-const showStatus = async () => {
-    const proxyOnline = await isProxyOnline();
-    console.log('Reverse Proxy: ' + (
-        proxyOnline
-            ? chalk.greenBright('Online')
-            : chalk.red('Offline')
-    ));
+const isProxyStopped = async () => {
+    const foundInfo = await getProxyContainerInfo();
 
-    lib.newline();
+    if (foundInfo === null) {
+        return false;
+    }
 
-    const sitesPath = getSitesPath();
-    const enabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf$');
-    printSites('Enabled sites:', enabledSites);
-
-    lib.newline();
-
-    const disabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf\.disabled$');
-    printSites('Disabled sites:', disabledSites);
+    return foundInfo.State.Status === 'exited';
 };
+
+const startProxyContainer = async () => {
+    const command = 'docker start ' + proxyContainerName;
+
+    return lib.shellRun(command);
+};
+
+const existsProxyImage = async () => {
+    const foundInfo = await getProxyImageInfo();
+
+    return foundInfo !== null;
+};
+
+const buildProxyImage = async () => {
+    return docker.buildImage(proxyImageName, getProxyFolderPath());
+};
+
+const makeForwardSlashes = (path) => {
+    return path.replace(/\\/g, '/');
+};
+
+const runProxyContainer = async () => {
+    const proxyDir = makeForwardSlashes(getProxyFolderPath());
+
+    const command = 'docker run -d'
+        + ' --name ' + proxyContainerName
+        + ' -p 80:80'
+        + ' --mount type=bind,source="' + proxyDir + '/includes",target=/etc/nginx/includes'
+        + ' --mount type=bind,source="' + proxyDir + '/sites",target=/etc/nginx/sites'
+        + ' ' + proxyImageName;
+
+    return lib.shellRun(command);
+}
+
+const stopProxyContainer = async () => {
+    const command = 'docker stop ' + proxyContainerName;
+
+    return lib.shellRun(command);
+}
 
 const getHosts = () => {
     let hosts = [];
@@ -137,6 +208,61 @@ const selectHost = async (prompt, hosts) => {
     return result.host;
 };
 
+const isConfirmed = async (prompt) => {
+    const result = await inquirer.prompt({
+        type: 'confirm',
+        name: 'confirmed',
+        message: prompt,
+        default: false,
+    });
+
+    return result.confirmed;
+};
+
+const getEnabledConfigFile = (host) => {
+    return getSitesPath() + '\\' + host + '.conf';
+};
+
+const getDisabledConfigFile = (host) => {
+    return getSitesPath() + '\\' + host + '.conf.disabled';
+};
+
+const getConfigFile = (host) => {
+    if (files.fileExists(getEnabledConfigFile(host))) {
+        return getEnabledConfigFile(host);
+    }
+
+    if (files.fileExists(getDisabledConfigFile(host))) {
+        return getDisabledConfigFile(host);
+    }
+
+    return null;
+};
+
+// ****************************************************
+// Public Methods
+// ****************************************************
+
+const showStatus = async () => {
+    const proxyOnline = await isProxyOnline();
+    console.log('Reverse Proxy: ' + (
+        proxyOnline
+            ? chalk.greenBright('Online')
+            : chalk.red('Offline')
+    ));
+
+    lib.newline();
+
+    const sitesPath = getSitesPath();
+    const enabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf$');
+    printSites('Enabled sites:', enabledSites);
+
+    lib.newline();
+
+    const disabledSites = files.getFilesWithPattern(sitesPath, '.*\.conf\.disabled$');
+    printSites('Disabled sites:', disabledSites);
+};
+
 const createHost = async () => {
     const host = (await inquirer.prompt({
         name: 'host',
@@ -174,26 +300,6 @@ const createHost = async () => {
     files.writeFile(getEnabledConfigFile(host), config);
 };
 
-const getEnabledConfigFile = (host) => {
-    return getSitesPath() + '\\' + host + '.conf';
-};
-
-const getDisabledConfigFile = (host) => {
-    return getSitesPath() + '\\' + host + '.conf.disabled';
-};
-
-const getConfigFile = (host) => {
-    if (files.fileExists(getEnabledConfigFile(host))) {
-        return getEnabledConfigFile(host);
-    }
-
-    if (files.fileExists(getDisabledConfigFile(host))) {
-        return getDisabledConfigFile(host);
-    }
-
-    return null;
-};
-
 const deleteHost = async () => {
     const hosts = getHosts();
     const host = await selectHost('Host to delete', hosts);
@@ -211,17 +317,6 @@ const deleteHost = async () => {
 
     files.deleteFile(configFile);
     console.log('Configuration for host "' + host + '" was deleted');
-};
-
-const isConfirmed = async (prompt) => {
-    const result = await inquirer.prompt({
-            type: 'confirm',
-            name: 'confirmed',
-            message: prompt,
-            default: false,
-        });
-
-    return result.confirmed;
 };
 
 const deleteAllHosts = async () => {
@@ -268,18 +363,58 @@ const enableHost = async () => {
 };
 
 const startProxy = async () => {
-    // TODO
-    console.log('startProxy');
+    const proxyOnline = await isProxyOnline();
+
+    if (proxyOnline) {
+        return;
+    }
+
+    const proxyStopped = await isProxyStopped();
+
+    if (proxyStopped) {
+        console.log('Container is stopped. Starting container...');
+        await startProxyContainer();
+        console.log('Done.');
+
+        return;
+    }
+
+    const proxyImageExists = await existsProxyImage();
+
+    if (!proxyImageExists) {
+        console.log('Proxy image not found. Building...');
+
+        try {
+            await buildProxyImage();
+        } catch (error) {
+            console.log('Failed to build proxy image.');
+
+            return;
+        }
+
+        console.log('Successfully built image.');
+    }
+
+    console.log('Container is not started. Starting container...');
+    await runProxyContainer();
+    console.log('Done.');
 };
 
 const stopProxy = async () => {
-    // TODO
-    console.log('stopProxy');
+    const proxyOnline = await isProxyOnline();
+
+    if (!proxyOnline) {
+        return;
+    }
+
+    console.log('Container is running. Stopping container...');
+    await stopProxyContainer();
+    console.log('Done.');
 };
 
 const restartProxy = async () => {
-    // TODO
-    console.log('restartProxy');
+    await stopProxy();
+    await startProxy();
 };
 
 const reloadNginx = async () => {
