@@ -239,6 +239,12 @@ const getConfigFile = (host) => {
     return null;
 };
 
+const execProxyContainer = async (command) => {
+    const dockerCommand = 'docker exec ' + proxyContainerName + ' ' + command;
+
+    return lib.shellRun(dockerCommand, ['signal process started']);
+};
+
 // ****************************************************
 // Public Methods
 // ****************************************************
@@ -372,7 +378,7 @@ const startProxy = async () => {
     const proxyStopped = await isProxyStopped();
 
     if (proxyStopped) {
-        console.log('Container is stopped. Starting container...');
+        console.log('Starting container...');
         await startProxyContainer();
         console.log('Done.');
 
@@ -395,7 +401,7 @@ const startProxy = async () => {
         console.log('Successfully built image.');
     }
 
-    console.log('Container is not started. Starting container...');
+    console.log('Starting container...');
     await runProxyContainer();
     console.log('Done.');
 };
@@ -407,7 +413,7 @@ const stopProxy = async () => {
         return;
     }
 
-    console.log('Container is running. Stopping container...');
+    console.log('Stopping container...');
     await stopProxyContainer();
     console.log('Done.');
 };
@@ -418,8 +424,17 @@ const restartProxy = async () => {
 };
 
 const reloadNginx = async () => {
-    // TODO
-    console.log('reloadNginx');
+    const proxyOnline = await isProxyOnline();
+
+    if (!proxyOnline) {
+        console.log('Container is not running, nothing to reload');
+
+        return;
+    }
+
+    console.log('Reloading Nginx configuration...');
+    await execProxyContainer('nginx -s reload');
+    console.log('Done.');
 };
 
 module.exports = {

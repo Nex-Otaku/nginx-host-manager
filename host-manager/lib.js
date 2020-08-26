@@ -5,7 +5,7 @@ const _ = require('lodash');
 const pressAnyKey = require('press-any-key');
 
 module.exports = {
-    shellRun: async (command) => {
+    shellRun: async (command, ignoredMessages) => {
         return exec(command)
             .then(function (result) {
                 var stderr = result.stderr;
@@ -15,6 +15,14 @@ module.exports = {
                 return result.stdout;
             })
             .catch(function (err) {
+                if (Array.isArray(ignoredMessages)) {
+                    for (ignoredMessage of ignoredMessages) {
+                        if (err.message.includes(ignoredMessage)) {
+                            return;
+                        }
+                    }
+                }
+
                 console.error('ERROR: ', err);
             });
     },
