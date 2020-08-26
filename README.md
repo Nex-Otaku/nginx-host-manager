@@ -1,10 +1,12 @@
 Nginx Host Manager
 ===================================
 
+Development tool for managing Nginx hosts.
+
+![nginx-host-manager JPG](https://raw.githubusercontent.com/Nex-Otaku/nginx-host-manager/master/img/screenshot.jpg)
+
 Why?
 ---------
-
-This is a development tool for managing Nginx hosts.
 
 You for sure can do all of its functionality manually.
 
@@ -36,4 +38,26 @@ To use this tool, you will need:
 Installation
 ---------
 
-To be done.
+You can run tool from its own repo.
+
+```
+Clone the repo
+cd nginx-host-manager
+npm start
+```
+
+Or just install it globally to run from anywhere.
+
+```
+Clone the repo
+cd nginx-host-manager
+npm link
+nginx-host-manager
+```
+
+Usage
+---------
+
+```
+nginx-host-manager
+```

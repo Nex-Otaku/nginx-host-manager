@@ -1,5 +1,5 @@
 {
-  "name": "nginx-host-manager",
+  "name": "@nex-otaku/nginx-host-manager",
   "version": "1.0.0",
   "description": "Tool to manage Nginx hosts",
   "main": "host-manager/host-manager-cli.js",
@@ -7,6 +7,8 @@
     "cli": "node host-manager/host-manager-cli.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "preferGlobal": true,
+  "bin": "./host-manager/host-manager-cli.js",
   "keywords": [
     "nodejs",
     "nginx",
