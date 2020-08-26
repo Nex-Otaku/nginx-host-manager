@@ -276,6 +276,47 @@ const renameFile = (from, to) => {
     files.renameFile(from, to);
 };
 
+const createConfig = (host, port) => {
+    let config = files.readFile(getProxyFolderPath() + '\\host-template.conf');
+
+    config = config.replace(/%HOST%/g, host);
+    config = config.replace(/%PORT%/g, port);
+
+    files.writeFile(getEnabledConfigFile(host), config);
+};
+
+const inputHost = async () => {
+    return (await inquirer.prompt({
+        name: 'host',
+        type: 'input',
+        message: 'Host:',
+        default: 'localhost',
+        validate: function( value ) {
+            if (value.length) {
+                return true;
+            } else {
+                return 'Please enter host name';
+            }
+        }
+    })).host;
+};
+
+const inputPort = async () => {
+    return (await inquirer.prompt({
+        name: 'port',
+        type: 'input',
+        default: '9000',
+        message: 'Port:',
+        validate: function( value ) {
+            if (value.length) {
+                return true;
+            } else {
+                return 'Please enter port number';
+            }
+        }
+    })).port;
+};
+
 // ****************************************************
 // Public Methods
 // ****************************************************
@@ -302,40 +343,10 @@ const showStatus = async () => {
 };
 
 const createHost = async () => {
-    const host = (await inquirer.prompt({
-        name: 'host',
-        type: 'input',
-        message: 'Host:',
-        default: 'localhost',
-        validate: function( value ) {
-            if (value.length) {
-                return true;
-            } else {
-                return 'Please enter host name';
-            }
-        }
-    })).host;
+    const host = await inputHost();
+    const port = await inputPort();
 
-    const port = (await inquirer.prompt({
-        name: 'port',
-        type: 'input',
-        default: '9000',
-        message: 'Port:',
-        validate: function( value ) {
-            if (value.length) {
-                return true;
-            } else {
-                return 'Please enter port number';
-            }
-        }
-    })).port;
-
-    let config = files.readFile(files.getCurrentDirectory() + '\\reverse-proxy\\host-template.conf');
-
-    config = config.replace(/%HOST%/g, host);
-    config = config.replace(/%PORT%/g, port);
-
-    files.writeFile(getEnabledConfigFile(host), config);
+    createConfig(host, port);
 };
 
 const deleteHost = async () => {
@@ -388,8 +399,24 @@ const deleteAllHosts = async () => {
 };
 
 const changePort = async () => {
-    // TODO
-    console.log('changePort');
+    const hosts = getHosts();
+    const host = await selectHost('Host to change port', hosts);
+
+    if (host === '') {
+        console.log('No host selected');
+
+        return;
+    }
+
+    const port = await inputPort();
+
+    const configFile = getConfigFile(host);
+
+    if (configFile !== null) {
+        files.deleteFile(configFile);
+    }
+
+    createConfig(host, port);
 };
 
 const disableHost = async () => {
