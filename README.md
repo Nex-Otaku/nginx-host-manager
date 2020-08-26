@@ -3,7 +3,7 @@ Nginx Host Manager
 
 Development tool for managing Nginx hosts.
 
-![nginx-host-manager JPG](https://raw.githubusercontent.com/Nex-Otaku/nginx-host-manager/master/img/screenshot.jpg)
+![nginx-host-manager PNG](https://raw.githubusercontent.com/Nex-Otaku/nginx-host-manager/master/img/screenshot.png)
 
 Why?
 ---------
