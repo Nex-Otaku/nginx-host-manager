@@ -1,3 +1,9 @@
+no-command:
+	@echo Usage: make [scenario]
+
+# Stop, rebuild and run again
+rebuild: stop remove build run
+
 # Build image
 build:
 	docker build -t reverse-proxy-image .
@@ -7,8 +13,10 @@ run:
 	docker run -d \
 		--name reverse-proxy \
 		-p 80:80 \
+		-p 443:443 \
 		--mount type=bind,source="${CURDIR}/includes",target=/etc/nginx/includes \
 		--mount type=bind,source="${CURDIR}/sites",target=/etc/nginx/sites \
+		--mount type=bind,source="${CURDIR}/cert",target=/etc/ssl \
 		reverse-proxy-image
 
 # Stop container
@@ -23,8 +31,6 @@ start:
 remove:
 	docker rm reverse-proxy
 
-# Stop, rebuild and run again
-rebuild: stop remove build run
 
 check-config:
 	docker exec -ti reverse-proxy nginx -t
