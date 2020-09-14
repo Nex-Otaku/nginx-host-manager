@@ -157,6 +157,7 @@ const runProxyContainer = async () => {
     const command = 'docker run -d'
         + ' --name ' + proxyContainerName
         + ' -p 80:80'
+        + ' --mount type=bind,source="' + proxyDir + '/cert",target=/etc/ssl'
         + ' --mount type=bind,source="' + proxyDir + '/includes",target=/etc/nginx/includes'
         + ' --mount type=bind,source="' + proxyDir + '/sites",target=/etc/nginx/sites'
         + ' ' + proxyImageName;
