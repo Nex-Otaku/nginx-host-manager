@@ -31,8 +31,12 @@ const printSites = (label, sites) => {
     }
 };
 
+const getAppFolderPath = () => {
+    return path.dirname(path.dirname(process.argv[1]));
+}
+
 const getProxyFolderPath = () => {
-    return path.join(files.getCurrentDirectory(), 'reverse-proxy');
+    return path.join(getAppFolderPath(), 'reverse-proxy');
 }
 
 const getSitesPath = () => {
