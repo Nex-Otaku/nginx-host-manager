@@ -3,6 +3,7 @@ const chalk = require('chalk');
 const lib = require('./lib');
 const inquirer = require('inquirer');
 const docker = require('./docker');
+const path = require('path');
 
 const proxyImageName = 'reverse-proxy-image';
 const proxyContainerName = 'reverse-proxy';
@@ -31,11 +32,11 @@ const printSites = (label, sites) => {
 };
 
 const getProxyFolderPath = () => {
-    return files.getCurrentDirectory() + '\\reverse-proxy';
+    return path.join(files.getCurrentDirectory(), 'reverse-proxy');
 }
 
 const getSitesPath = () => {
-    return getProxyFolderPath() + '\\sites';
+    return path.join(getProxyFolderPath(), 'sites');
 };
 
 const getProxyContainerInfo = async () => {
@@ -237,11 +238,11 @@ const isConfirmed = async (prompt) => {
 };
 
 const getEnabledConfigFile = (host) => {
-    return getSitesPath() + '\\' + host + '.conf';
+    return path.join(getSitesPath(), host + '.conf');
 };
 
 const getDisabledConfigFile = (host) => {
-    return getSitesPath() + '\\' + host + '.conf.disabled';
+    return path.join(getSitesPath(), host + '.conf.disabled');
 };
 
 const getConfigFile = (host) => {
@@ -279,7 +280,7 @@ const renameFile = (from, to) => {
 };
 
 const createConfig = (host, port) => {
-    let config = files.readFile(getProxyFolderPath() + '\\host-template.conf');
+    let config = files.readFile(path.join(getProxyFolderPath(), 'host-template.conf'));
 
     config = config.replace(/%HOST%/g, host);
     config = config.replace(/%PORT%/g, port);
