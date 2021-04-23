@@ -48,6 +48,7 @@ const mainLoop = async () => {
 
         const selectedAction = await selectAction([
             'Create host',
+            'Create SSL certificates',
             'Delete host',
             'Change port',
             'Disable host',
@@ -62,6 +63,10 @@ const mainLoop = async () => {
 
         if (selectedAction === 'Create host') {
             await manager.createHost();
+        }
+
+        if (selectedAction === 'Create SSL certificates') {
+            await manager.createCertificates();
         }
 
         if (selectedAction === 'Delete host') {

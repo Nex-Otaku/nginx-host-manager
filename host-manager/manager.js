@@ -4,6 +4,7 @@ const lib = require('./lib');
 const inquirer = require('inquirer');
 const docker = require('./docker');
 const path = require('path');
+const commandExistsSync = require('command-exists').sync;
 
 const proxyImageName = 'reverse-proxy-image';
 const proxyContainerName = 'reverse-proxy';
@@ -292,6 +293,30 @@ const createConfig = (host, port) => {
     files.writeFile(getEnabledConfigFile(host), config);
 };
 
+const getCertificatesFolderPath = () => {
+    return path.join(getProxyFolderPath(), 'cert');
+};
+
+const createCertificatesForHost = async (host) => {
+    if (!commandExistsSync('mkcert')) {
+        console.log('Not found "mkcert" utility. Please install it to be able generate self-signed SSL certificates.');
+        console.log('See https://github.com/FiloSottile/mkcert#installation');
+
+        return;
+    }
+
+    const certFilePath = path.join(getCertificatesFolderPath(), host + '.crt');
+    const keyFilePath = path.join(getCertificatesFolderPath(), host + '.key');
+
+    const command = 'mkcert'
+        + ' -cert-file ' + certFilePath
+        + ' -key-file ' + keyFilePath
+        + ' ' + host + ' *.' + host;
+
+    console.log(await lib.shellRun(command));
+    console.log('Successfully generated self-signed SSL certificates for ' + host);
+};
+
 const inputHost = async () => {
     return (await inquirer.prompt({
         name: 'host',
@@ -354,6 +379,19 @@ const createHost = async () => {
     const port = await inputPort();
 
     createConfig(host, port);
+};
+
+const createSslCertificates = async () => {
+    const hosts = getHosts();
+    const host = await selectHost('Select host to create SSL certificates', hosts);
+
+    if (host === '') {
+        console.log('No host was selected');
+
+        return;
+    }
+
+    await createCertificatesForHost(host);
 };
 
 const deleteHost = async () => {
@@ -524,6 +562,7 @@ const reloadNginx = async () => {
 module.exports = {
     showStatus: showStatus,
     createHost: createHost,
+    createCertificates: createSslCertificates,
     deleteHost: deleteHost,
     deleteAllHosts: deleteAllHosts,
     changePort: changePort,
