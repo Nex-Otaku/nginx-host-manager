@@ -28,11 +28,11 @@ Prerequisites
 
 To use this tool, you will need:
 
-1. Windows
+1. Node.js - for host management in CLI
 
-2. Node.js
+2. Docker - for running proxy container
 
-3. Docker for Windows
+3. [mkcert](https://github.com/FiloSottile/mkcert) - for making self-signed SSL certificates
 
 
 Installation
