@@ -47,17 +47,19 @@ const mainLoop = async () => {
         await printHeader();
 
         const selectedAction = await selectAction([
+            'Start proxy',
+            'Stop proxy',
+            'Restart proxy',
+            'Reload Nginx configuration',
+            new inquirer.Separator(),
             'Create host',
             'Create SSL certificates',
             'Delete host',
             'Change port',
             'Disable host',
             'Enable host',
-            'Start proxy',
-            'Stop proxy',
-            'Restart proxy',
-            'Reload Nginx configuration',
             'Delete all hosts',
+            new inquirer.Separator(),
             'Exit',
         ]);
 
