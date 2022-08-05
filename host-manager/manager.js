@@ -33,7 +33,7 @@ const printSites = (label, sites) => {
 };
 
 const getAppFolderPath = () => {
-    return path.dirname(path.dirname(process.argv[1]));
+    return path.dirname(path.dirname(__filename));
 }
 
 const getProxyFolderPath = () => {
